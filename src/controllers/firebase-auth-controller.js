@@ -10,32 +10,65 @@ const {
 const auth = getAuth();
 
 class FirebaseAuthController {
-  registerUser(req, res) {
-    const { email, password } = req.body;
+  async registerUser(req, res) {
+    const { email, password, displayName } = req.body;
     if (!email || !password) {
       return res.status(422).json({
-        email: "Email is required",
-        password: "Password is required",
+        // email: "Email is required",
+        // password: "Password is required",
+        error: "Email, password, and display name are required",
       });
     }
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        sendEmailVerification(auth.currentUser)
-          .then(() => {
-            res.status(201).json({
-              message: "Verification email sent! User created successfully!",
-            });
-          })
-          .catch((error) => {
-            console.error(error);
-            res.status(500).json({ error: "Error sending email verification" });
-          });
-      })
-      .catch((error) => {
-        const errorMessage =
-          error.message || "An error occurred while registering user";
-        res.status(500).json({ error: errorMessage });
+
+    // createUserWithEmailAndPassword(auth, email, password)
+    //   .then((userCredential) => {
+    //     sendEmailVerification(auth.currentUser)
+    //       .then(() => {
+    //         res.status(201).json({
+    //           message: "Verification email sent! User created successfully!",
+    //         });
+    //       })
+    //       .catch((error) => {
+    //         console.error(error);
+    //         res.status(500).json({ error: "Error sending email verification" });
+    //       });
+    //   })
+    //   .catch((error) => {
+    //     const errorMessage =
+    //       error.message || "An error occurred while registering user";
+    //     res.status(500).json({ error: errorMessage });
+    //   });
+    try {
+      // Create the user with email and password
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Update user profile with display name
+      await updateProfile(userCredential.user, { displayName });
+
+      // Send verification email
+      await sendEmailVerification(userCredential.user);
+
+      res.status(201).json({
+        message: "Verification email sent! User created successfully!",
+        userCredential: userCredential.user, // Include user details in response
       });
+    } catch (error) {
+      // Handle errors specific to user creation
+      if (error.code === "auth/email-already-in-use") {
+        return res.status(400).json({ error: "Email already in use" });
+      } else if (error.code === "auth/weak-password") {
+        return res
+          .status(400)
+          .json({ error: "Password should be at least 6 characters" });
+      }
+
+      console.error(error);
+      res.status(500).json({ error: "Error registering user" });
+    }
   }
 
   loginUser(req, res) {
