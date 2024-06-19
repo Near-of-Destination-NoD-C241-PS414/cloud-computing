@@ -48,10 +48,10 @@ async function getRecommend(userLatitude, userLongitude, destinationsData) {
     const topRecommendations = destinationsData
       .slice(0, 10)
       .map((destination) => ({
-        "Kabupaten/Kota": destination["Kabupaten/Kota"],
+        // "Kabupaten/Kota": destination["Kabupaten/Kota"],
         "Nama Wisata": destination["Nama Wisata"],
-        "Jenis Wisata": destination["Jenis Wisata"],
-        Reviews: destination.Reviews,
+        // "Jenis Wisata": destination["Jenis Wisata"],
+        // Reviews: destination.Reviews,
         Rating: destination.Rating,
         User_Distance: `${destination.UserDistance} km`,
       }));

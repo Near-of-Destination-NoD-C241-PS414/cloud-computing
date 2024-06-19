@@ -1,6 +1,8 @@
 const { fetchDestinationsData } = require("../models/dataFetcher");
 const { getRecommend } = require("../models/getRecommend");
 const { getRecommendByCategory } = require("../models/getRecommendByCategory");
+const axios = require("axios");
+const { Firestore } = require("@google-cloud/firestore");
 
 const getDestinationByDistance = async (req, res) => {
   const { latitude, longitude } = req.body;
@@ -127,8 +129,140 @@ const getDestinationByReview = async (req, res) => {
   }
 };
 
+const getDetailsByName = async (req, res) => {
+  const name = req.params.name;
+  const db = new Firestore();
+
+  try {
+    // Step 1: Query Firestore
+
+    const querySnapshot = await db
+      .collection("destinations")
+      .where("Nama Wisata", "==", name)
+      .get();
+
+    let placeData;
+    let isNewData = false; // Menandakan apakah data baru dimasukkan ke Firestore
+    let placeId;
+
+    if (!querySnapshot.empty) {
+      // If data exists in Firestore, extract and return it
+      placeData = querySnapshot.docs[0].data();
+      const existingDocRef = querySnapshot.docs[0].ref;
+
+      // Step 2: Fetch from Google Places API if not found in Firestore
+      const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`,
+        {
+          params: {
+            input: name,
+            inputtype: "textquery",
+            key: API_KEY,
+          },
+        }
+      );
+
+      // Step 2: Fetch from Google Places API if not found in Firestore
+
+      const candidates = response.data.candidates;
+      const placeId = candidates.length > 0 ? candidates[0].place_id : null;
+      if (!placeId) {
+        res.status(404).json({ error: "Tempat tidak ditemukan" });
+        return;
+      }
+
+      const detailsResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/details/json`,
+        {
+          params: {
+            place_id: placeId,
+            fields: "types,reviews,photos",
+            language: "id",
+            key: API_KEY,
+          },
+        }
+      );
+      const { types, reviews, photos } = detailsResponse.data.result;
+
+      // Data yang akan dimasukkan ke Firestore
+      // placeData = {
+      //   "Nama Wisata": name,
+      //   place_id: placeId,
+      //   types,
+      //   reviews,
+      //   photos,
+      // };
+
+      const updatedData = {
+        ...placeData,
+        place_id: placeId,
+        types,
+        reviews,
+        photos,
+      };
+
+      await existingDocRef.set(updatedData, { merge: true });
+      placeData = updatedData;
+    } else {
+      // Step 2: Fetch from Google Places API if not found in Firestore
+      const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`,
+        {
+          params: {
+            input: name,
+            inputtype: "textquery",
+            key: API_KEY,
+          },
+        }
+      );
+
+      const candidates = response.data.candidates;
+      placeId = candidates.length > 0 ? candidates[0].place_id : null;
+      if (!placeId) {
+        res.status(404).json({ error: "Tempat tidak ditemukan" });
+        return;
+      }
+
+      const detailsResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/place/details/json`,
+        {
+          params: {
+            place_id: placeId,
+            fields: "types,reviews,photos",
+            language: "id",
+            key: API_KEY,
+          },
+        }
+      );
+      const { types, reviews, photos } = detailsResponse.data.result;
+
+      // Data to be added to Firestore
+      placeData = {
+        "Nama Wisata": name,
+        place_id: placeId,
+        types,
+        reviews,
+        photos,
+      };
+
+      // Save data to Firestore with placeId as document ID
+      await db.collection("destinations").doc(placeId).set(placeData);
+      isNewData = true; // Menandakan bahwa data baru dimasukkan ke Firestore
+    }
+    return res
+      .status(200)
+      .send({ status: "Berhasil", data: { placeData, isNewData } });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ status: "Gagal", msg: error });
+  }
+};
+
 module.exports = {
   getDestinationByDistance,
   getDestinationByCategory,
   getDestinationByReview,
+  getDetailsByName,
 };

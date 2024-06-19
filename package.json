@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@tensorflow/tfjs-node": "^4.20.0",
+    "axios": "^1.7.2",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

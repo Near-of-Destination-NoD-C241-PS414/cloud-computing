@@ -16,6 +16,10 @@ router.post("/search/nearby", destinationController.getDestinationByDistance);
 router.post("/search/category", destinationController.getDestinationByCategory);
 router.post("/search/review", destinationController.getDestinationByReview);
 
+//ini untuk mendapatkan detail
+router.get("/search/details/:name", destinationController.getDetailsByName);
+
+//ini untuk user mengsubmit review
 router.post("/reviews/:placeId", verifyToken, reviewsController.addReview);
 router.get(
   "/reviews/:placeId",
