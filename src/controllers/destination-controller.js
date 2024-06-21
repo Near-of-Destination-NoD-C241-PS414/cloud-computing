@@ -65,25 +65,25 @@ const getDestinationByCategory = async (req, res) => {
   }
 
   try {
-    // 3. Fetch Destinations Data
+    // Fetch Destinations Data
     const destinationsData = await fetchDestinationsData(process.env.DATA_URL);
 
-    // 4. Get Recommendations
+    // Get Recommendations
     const recommendation = await getRecommendByCategory(
       latitude,
       longitude,
       destinationsData
     );
 
-    // 5. Sort by specified category
+    // Sort by specified category
     recommendation.sort((a, b) => b[category] - a[category]);
 
-    // 6. Filter results by the selected category
+    // Filter results by the selected category
     const filteredRecommendation = recommendation.filter(
       (place) => place["Jenis Wisata"] === category
     );
 
-    // 6. Send Response
+    // Send Response
     res.json(filteredRecommendation);
   } catch (error) {
     console.error("Error processing recommendation:", error);
@@ -104,24 +104,24 @@ const getDestinationByReview = async (req, res) => {
   }
 
   try {
-    // 3. Fetch Destinations Data
+    // Fetch Destinations Data
     const destinationsData = await fetchDestinationsData(process.env.DATA_URL);
 
-    // 4. Get Recommendations
+    // Get Recommendations
     const recommendation = await getRecommend(
       latitude,
       longitude,
       destinationsData
     );
 
-    // 5. Sort by Reviews
+    // Sort by Reviews
     const filteredByReview = recommendation.sort(
       (a, b) => b.Reviews - a.Reviews
     );
 
     const top10ByReviews = filteredByReview.slice(0, 10);
 
-    // 6. Send Response
+    // Send Response
     res.json(top10ByReviews);
   } catch (error) {
     console.error("Error processing recommendation:", error);
@@ -134,7 +134,7 @@ const getDetailsByName = async (req, res) => {
   const db = new Firestore();
 
   try {
-    // Step 1: Query Firestore
+    // Query Firestore
 
     const querySnapshot = await db
       .collection("destinations")
@@ -142,7 +142,7 @@ const getDetailsByName = async (req, res) => {
       .get();
 
     let placeData;
-    let isNewData = false; // Menandakan apakah data baru dimasukkan ke Firestore
+    let isNewData = false; // sign the data is new or not
     let placeId;
 
     if (!querySnapshot.empty) {
@@ -150,7 +150,7 @@ const getDetailsByName = async (req, res) => {
       placeData = querySnapshot.docs[0].data();
       const existingDocRef = querySnapshot.docs[0].ref;
 
-      // Step 2: Fetch from Google Places API if not found in Firestore
+      // Fetch from Google Places API if not found in Firestore
       const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`,
@@ -163,7 +163,7 @@ const getDetailsByName = async (req, res) => {
         }
       );
 
-      // Step 2: Fetch from Google Places API if not found in Firestore
+      //Fetch from Google Places API if not found in Firestore
 
       const candidates = response.data.candidates;
       const placeId = candidates.length > 0 ? candidates[0].place_id : null;
@@ -185,15 +185,6 @@ const getDetailsByName = async (req, res) => {
       );
       const { types, reviews, photos } = detailsResponse.data.result;
 
-      // Data yang akan dimasukkan ke Firestore
-      // placeData = {
-      //   "Nama Wisata": name,
-      //   place_id: placeId,
-      //   types,
-      //   reviews,
-      //   photos,
-      // };
-
       const updatedData = {
         ...placeData,
         place_id: placeId,
@@ -205,7 +196,7 @@ const getDetailsByName = async (req, res) => {
       await existingDocRef.set(updatedData, { merge: true });
       placeData = updatedData;
     } else {
-      // Step 2: Fetch from Google Places API if not found in Firestore
+      // Fetch from Google Places API if not found in Firestore
       const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`,
