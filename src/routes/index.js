@@ -21,11 +21,11 @@ router.post("/search/review", destinationController.getDestinationByReview);
 router.get("/search/details/:name", destinationController.getDetailsByName);
 
 //for user submitted review
-router.post("/reviews/:placeId", verifyToken, reviewsController.addReview);
+router.post("/reviews/:name", verifyToken, reviewsController.addReview);
 router.get(
-  "/reviews/:placeId",
+  "/reviews/:name",
   // verifyToken,
-  reviewsController.getReviewsByPlaceId
+  reviewsController.getReviewsByName
 );
 
 module.exports = router;
