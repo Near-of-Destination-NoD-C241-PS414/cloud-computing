@@ -4,18 +4,28 @@ const verifyToken = require("../middleware/index.js");
 
 const firebaseAuthController = require("../controllers/firebase-auth-controller.js");
 const destinationController = require("../controllers/destination-controller.js");
-// const PostsController = require("../controllers/posts-controller.js");
+const reviewsController = require("../controllers/reviews-controller.js");
 
+//for authentication
 router.post("/api/register", firebaseAuthController.registerUser);
 router.post("/api/login", firebaseAuthController.loginUser);
 router.post("/api/logout", firebaseAuthController.logoutUser);
 router.post("/api/reset-password", firebaseAuthController.resetPassword);
 
+//to get places recommendation
 router.post("/search/nearby", destinationController.getDestinationByDistance);
 router.post("/search/category", destinationController.getDestinationByCategory);
 router.post("/search/review", destinationController.getDestinationByReview);
 
-// Only authenticated users can access this route
-// router.get("/api/posts", verifyToken, PostsController.getPosts);
+//to get places details
+router.get("/search/details/:name", destinationController.getDetailsByName);
+
+//for user submitted review
+router.post("/reviews/:name", verifyToken, reviewsController.addReview);
+router.get(
+  "/reviews/:name",
+  // verifyToken,
+  reviewsController.getReviewsByName
+);
 
 module.exports = router;

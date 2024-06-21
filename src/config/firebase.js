@@ -3,6 +3,13 @@ const firebase = require("firebase/app");
 const admin = require("firebase-admin");
 const serviceAccount = require("../firebaseService.json");
 
+const { Firestore } = require("@google-cloud/firestore");
+
+const db = new Firestore({
+  projectId: process.env.FIREBASE_PROJECT_ID, // Assuming you have this in your .env
+  keyFilename: "./src/firebaseService.json", // Adjust the path
+});
+
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
   authDomain: process.env.FIREBASE_AUTH_DOMAIN,
@@ -35,4 +42,5 @@ module.exports = {
   sendEmailVerification,
   sendPasswordResetEmail,
   admin,
+  db,
 };
